@@ -8,20 +8,18 @@ public class Particle : MonoBehaviour
     public Vector2 position { private set; get; }
     Vector2 oldPosition;
     Vector2 acceleration;
-    float resistance;
     public bool collision;
 
-    public void Initialize(Vector3 particleSize, Vector3 next_position, float resistance)
+    public void Initialize(Vector3 particleSize, Vector3 next_position)
     {
         transform.localScale = particleSize;
         position = transform.position + next_position;
         oldPosition = transform.position;
         acceleration = Vector2.zero;
-        this.resistance = resistance;
         collision = false;
     }
 
-    public void UpdatePosition(float deltaTime)
+    public void UpdatePosition(float deltaTime, float resistance)
     {
         Vector2 velocity;
         if (collision)

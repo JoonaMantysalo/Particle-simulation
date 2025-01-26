@@ -7,68 +7,26 @@ using static UnityEngine.ParticleSystem;
 
 public class SimulationController : MonoBehaviour
 {
-    public GameObject particlePrefab;
-    public SpawnType spawnType;
-    public int particlesPerRow;
-    public int numOfRows;
-    public float spawnRate;
-    public Vector2 spawnPosition;
     public float particleSize;
-    [Range(1.0f, 3.0f)]
-    public float density;
-
     public float gravity;
     [Range(0f, 1f)]
     public float resistance;
-    public Vector2 initialVelocity;
 
-    public ContainerType container; 
+    public ContainerType container;
     public Vector2 containerSizeRec;
     public float containerSizeCir;
-
     public Sprite containerSprite;
     public List<Particle> particles;
 
-
+    ParticleGeneration particleGeneration;
+    Vector2 centerPoint;
     int spawnRateCounter = 0;
-    int particleCount = 0;
     int subSteps = 8;
 
     void OnValidate()
     {
-        if (spawnType == SpawnType.AllAtOnce)
-        {
-            if (particlePrefab == null || numOfRows <= 0 || particlesPerRow <= 0)
-            {
-                Debug.LogWarning("Invalid configuration in ParticleGenerator");
-                return;
-            }
-
-            particles = new List<Particle>();
-
-            // Defer the cleanup and generation process to avoid conflicts
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
-                                      
-                ClearGeneratedParticles();
-
-                GenerateParticlesAll();
-            };
-        }
-        if (spawnType == SpawnType.OneByOne)
-        {
-            particles = new List<Particle>();
-
-            // Defer the cleanup and generation process to avoid conflicts
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
-
-                ClearGeneratedParticles();
-                GenerateParticle();
-            };
-        }
+        particleGeneration = GetComponent<ParticleGeneration>();
+        centerPoint = transform.position;
 
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
 
@@ -79,71 +37,13 @@ public class SimulationController : MonoBehaviour
             spriteRenderer.transform.localScale = Vector3.one * containerSizeCir * 2;
         }
         else spriteRenderer.sprite = null;
-
-    }
-
-    void ClearGeneratedParticles()
-    {
-        // Destroy all child GameObjects
-        for (int i = transform.childCount - 1; i >= 0; i--)
-        {
-            DestroyImmediate(transform.GetChild(i).gameObject);
-        }
-        particles.Clear();
-    }
-
-    void GenerateParticlesAll()
-    {
-        for (int i = 0; i < numOfRows; i++)
-        {
-            for (int j = 0; j < particlesPerRow; j++)
-            {
-                float jitterX = Random.Range(-(density - 1) / 2, (density - 1) / 2)/10;
-                float jitterY = Random.Range(-(density - 1) / 2, (density - 1) / 2)/10;
-
-                Vector3 localPosition = new Vector3(
-                    (j * particleSize * density + spawnPosition.x + jitterX) / transform.localScale.x, 
-                    (i * particleSize * density + spawnPosition.y + jitterY) / transform.localScale.y, 
-                    0);
-
-                GameObject newParticleObject = Instantiate(particlePrefab, transform);
-                newParticleObject.transform.localPosition = localPosition;
-                newParticleObject.name = $"Particle ({i}, {j})";
-
-                Vector3 localSize = new Vector3(
-                    1 / transform.localScale.x,
-                    1 / transform.localScale.y,
-                    1 / transform.localScale.z
-                );
-                Particle newParticle = newParticleObject.GetComponent<Particle>();
-                newParticle.Initialize(localSize * particleSize, initialVelocity, resistance);
-                particles.Add(newParticle);
-            }
-        }
-    }
-
-    void GenerateParticle()
-    {
-        GameObject newParticleObject = Instantiate(particlePrefab, transform);
-        newParticleObject.transform.position = spawnPosition;
-        newParticleObject.name = $"Particle ({particleCount})";
-        particleCount++;
-
-        Vector3 localSize = new Vector3( 
-            1 / transform.localScale.x, 
-            1 / transform.localScale.y, 
-            1 / transform.localScale.z
-        );
-        Particle newParticle = newParticleObject.GetComponent<Particle>();
-        newParticle.Initialize(localSize * particleSize, initialVelocity, resistance);
-        particles.Add(newParticle);
     }
 
     void FixedUpdate()
     {
-        if (spawnType == SpawnType.OneByOne && spawnRateCounter >= spawnRate)
+        if (particleGeneration.spawnType == SpawnType.OneByOne && spawnRateCounter >= particleGeneration.spawnRate)
         {
-            GenerateParticle();
+            particleGeneration.GenerateParticle(particles, particleSize);
             spawnRateCounter = 0;
         }
         else
@@ -168,7 +68,7 @@ public class SimulationController : MonoBehaviour
     {
         foreach(var particle in particles)
         {
-            particle.UpdatePosition(deltaTime);
+            particle.UpdatePosition(deltaTime, resistance);
         }
     }
 
@@ -208,15 +108,14 @@ public class SimulationController : MonoBehaviour
     void WallCollisionsCircle()
     {
         float radius = particleSize / 2;
-        Vector2 circleCenter = Vector2.zero;
         foreach (var particle in particles)
         {
             Vector2 pos = particle.position;
-            Vector2 direction = (pos - circleCenter).normalized;
-            float distance = Vector2.Distance(particle.position + direction * radius, circleCenter);
+            Vector2 direction = (pos - centerPoint).normalized;
+            float distance = Vector2.Distance(particle.position + direction * radius, centerPoint);
             if (distance > containerSizeCir)
             {
-                particle.SetPosition(circleCenter + direction * (containerSizeCir - radius));
+                particle.SetPosition(centerPoint + direction * (containerSizeCir - radius));
                 particle.collision = true;
             }
         }
@@ -252,16 +151,4 @@ public class SimulationController : MonoBehaviour
         //if (container == ContainerType.Circle)
         //    Gizmos.DrawWireSphere(Vector2.zero, containerSizeCir);
     }
-}
-
-public enum ContainerType
-{
-    Rectangle,
-    Circle
-}
-
-public enum SpawnType
-{
-    AllAtOnce,
-    OneByOne
 }
