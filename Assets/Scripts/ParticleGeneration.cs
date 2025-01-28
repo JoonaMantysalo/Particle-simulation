@@ -1,9 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.ParticleSystem;
 
 public class ParticleGeneration : MonoBehaviour
 {
@@ -17,15 +14,25 @@ public class ParticleGeneration : MonoBehaviour
     public float density;
     public Vector2 initialVelocity;
 
+    public Vector2 localParticleSize;
+    float particleRadius;
     int particleCount = 0;
 
     private void OnValidate()
     {
-        SimulationController simController = GetComponent<SimulationController>(); 
-        simController.particles = Generate(simController.particleSize);
+        SimulationController simController = GetComponent<SimulationController>();
+        particleRadius = simController.particleSize;
+        localParticleSize = new Vector2(
+            1 / transform.localScale.x,
+            1 / transform.localScale.y
+            ) * particleRadius;
+        EditorApplication.delayCall += () =>
+        {
+            //Generate();
+        };
     }
 
-    public List<Particle> Generate(float particleSize)
+    public List<Particle> Generate()
     {
         List<Particle> particles = new List<Particle>();
         if (spawnType == SpawnType.AllAtOnce)
@@ -36,26 +43,16 @@ public class ParticleGeneration : MonoBehaviour
                 return null;
             }
 
-            // Defer the cleanup and generation process to avoid conflicts
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
 
-                ClearGeneratedParticles(particles);
+            ClearGeneratedParticles(particles);
 
-                GenerateParticlesAll(particles, particleSize);
-            };
+            GenerateParticlesAll(particles);
         }
         if (spawnType == SpawnType.OneByOne)
         {
-            // Defer the cleanup and generation process to avoid conflicts
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
-
-                ClearGeneratedParticles(particles);
-                GenerateParticle(particles, particleSize);
-            };
+            ClearGeneratedParticles(particles);
+            particles.Add(GenerateParticle());
+            
         }
         return particles;
         
@@ -71,7 +68,7 @@ public class ParticleGeneration : MonoBehaviour
         particles.Clear();
     }
 
-    public List<Particle> GenerateParticlesAll(List<Particle> particles, float particleSize)
+    public List<Particle> GenerateParticlesAll(List<Particle> particles)
     {
         for (int i = 0; i < numOfRows; i++)
         {
@@ -81,41 +78,32 @@ public class ParticleGeneration : MonoBehaviour
                 float jitterY = Random.Range(-(density - 1) / 2, (density - 1) / 2) / 10;
 
                 Vector3 localPosition = new Vector3(
-                    (j * particleSize * density + spawnPosition.x + jitterX) / transform.localScale.x,
-                    (i * particleSize * density + spawnPosition.y + jitterY) / transform.localScale.y,
+                    (j * particleRadius * density + spawnPosition.x + jitterX) / transform.localScale.x,
+                    (i * particleRadius * density + spawnPosition.y + jitterY) / transform.localScale.y,
                     0);
 
                 GameObject newParticleObject = Instantiate(particlePrefab, transform);
                 newParticleObject.transform.localPosition = localPosition;
                 newParticleObject.name = $"Particle ({i}, {j})";
+                particleCount++;
 
-                Vector3 localSize = new Vector3(
-                    1 / transform.localScale.x,
-                    1 / transform.localScale.y,
-                    1 / transform.localScale.z
-                );
                 Particle newParticle = newParticleObject.GetComponent<Particle>();
-                newParticle.Initialize(localSize * particleSize, initialVelocity);
+                newParticle.Initialize(localParticleSize, initialVelocity);
                 particles.Add(newParticle);
             }
         }
         return particles;
     }
 
-    public void GenerateParticle(List<Particle> particles, float particleSize)
+    public Particle GenerateParticle()
     {
         GameObject newParticleObject = Instantiate(particlePrefab, transform);
         newParticleObject.transform.position = spawnPosition;
         newParticleObject.name = $"Particle ({particleCount})";
         particleCount++;
 
-        Vector3 localSize = new Vector3(
-            1 / transform.localScale.x,
-            1 / transform.localScale.y,
-            1 / transform.localScale.z
-        );
         Particle newParticle = newParticleObject.GetComponent<Particle>();
-        newParticle.Initialize(localSize * particleSize, initialVelocity);
-        particles.Add(newParticle);
+        newParticle.Initialize(localParticleSize, initialVelocity);
+        return newParticle;
     }
 }

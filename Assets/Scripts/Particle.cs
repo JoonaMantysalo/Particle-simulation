@@ -46,7 +46,6 @@ public class Particle : MonoBehaviour
     public void SetPosition(Vector2 pos)
     {
         position = pos;
-        transform.position = position;
     }
 
 }

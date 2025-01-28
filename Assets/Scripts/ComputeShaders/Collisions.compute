@@ -1,0 +1,53 @@
+#pragma kernel CSMain
+
+struct ParticleStruct
+{
+    float2 position;
+};
+
+StructuredBuffer<ParticleStruct> particles;
+RWStructuredBuffer<float2> positionChanges;
+float particleRadius;
+
+[numthreads(256, 1, 1)] void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint particleIndex = id.x;
+
+    // Check if the particle index is valid
+    if (particleIndex >= particles.Length)
+        return;
+
+    float2 position = particles[particleIndex].position;
+
+    ParticleStruct particle = particles[particleIndex];
+
+    for (uint i = 0; i < particles.Length; i++)
+    {
+        if (i == particleIndex)
+            continue;
+
+        ParticleStruct other = particles[i];
+
+        float2 diff = particle.position - other.position;
+        float dist = length(diff);
+
+        // Check for collision (distance < combined radii)
+        if (dist < particleRadius * 2.0f)
+        {
+            // Normalize the difference vector
+            float2 normal = diff / dist;
+
+            float overlap = particleRadius * 2.0f - dist;
+
+            positionChanges[particleIndex] += normal * (overlap * 0.5f);
+            // positionChanges[i] -= normal * (overlap * 0.5f);
+            //  particle.position += normal * (overlap * 0.5f);
+            //   other.position -= normal * (overlap * 0.5f);
+
+            // particles[i] = other;
+        }
+    }
+
+    // Write back the updated particle
+    // particles[particleIndex] = particle;
+}
