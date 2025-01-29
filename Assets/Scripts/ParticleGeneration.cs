@@ -12,12 +12,18 @@ public class ParticleGeneration : MonoBehaviour
     public Vector2 spawnPosition;
     [Range(1.0f, 3.0f)]
     public float density;
-    public Vector2 initialVelocity;
+    public float spawnSpeed;
+    [Range(-3.14f, 3.14f)]
+    public float spawnAngle = 0f;
+    public float oscillationSpeed = 2f;
+    public float angleRange = 60f;
 
-    public Vector2 localParticleSize;
+    Vector2 localParticleSize;
     float particleRadius;
     int particleCount = 0;
 
+    float hue = 0f; // For coloring
+    float timeElapsed = 0f;
 
     private void OnValidate()
     {
@@ -53,10 +59,10 @@ public class ParticleGeneration : MonoBehaviour
         {
             ClearGeneratedParticles(particles);
             particles.Add(GenerateParticle());
-            
+
         }
         return particles;
-        
+
     }
 
     void ClearGeneratedParticles(List<Particle> particles)
@@ -89,6 +95,7 @@ public class ParticleGeneration : MonoBehaviour
                 particleCount++;
 
                 Particle newParticle = newParticleObject.GetComponent<Particle>();
+                Vector2 initialVelocity = new Vector2(Mathf.Cos(spawnAngle), Mathf.Sin(spawnAngle)) * spawnSpeed;
                 newParticle.Initialize(localParticleSize, initialVelocity);
                 particles.Add(newParticle);
             }
@@ -104,7 +111,25 @@ public class ParticleGeneration : MonoBehaviour
         particleCount++;
 
         Particle newParticle = newParticleObject.GetComponent<Particle>();
+
+        float oscillatingAngle = Mathf.Sin(timeElapsed * oscillationSpeed) * angleRange;
+        float angleInRadians = oscillatingAngle * Mathf.Deg2Rad;
+
+        Vector2 initialVelocity = new Vector2(Mathf.Sin(angleInRadians), -Mathf.Cos(angleInRadians)) * spawnSpeed;
         newParticle.Initialize(localParticleSize, initialVelocity);
+
+        SpriteRenderer spriteRenderer = newParticle.GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null)
+        {
+            // Assign a smoothly changing rainbow color
+            spriteRenderer.color = Color.HSVToRGB(hue, 1f, 1f);
+        }
+        hue += 0.001f;
+        if (hue > 1f) hue -= 1f;
+
+        timeElapsed += Time.deltaTime;
+
         return newParticle;
     }
 }

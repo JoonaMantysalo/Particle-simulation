@@ -19,6 +19,8 @@ float particleRadius;
 
     ParticleStruct particle = particles[particleIndex];
 
+    // Check for collisions with other particles
+    // TODO: Optimize this by using a spatial partitioning data structure
     for (uint i = 0; i < particles.Length; i++)
     {
         if (i == particleIndex)
@@ -29,15 +31,16 @@ float particleRadius;
         float2 diff = particle.position - other.position;
         float dist = length(diff);
 
-        // Check for collision (distance < combined radii)
+        // Check for collision
         if (dist < particleRadius * 2.0f)
         {
-            // Normalize the difference vector
+            if (dist == 0.0f)
+                dist = 0.0001f; // Incase the particles are at the same position
             float2 normal = diff / dist;
 
             float overlap = particleRadius * 2.0f - dist;
 
-            positionChanges[particleIndex] += normal * (overlap * 0.2f); // Modify the multiplier if simulation looks too unstable
+            positionChanges[particleIndex] += normal * (overlap * 0.25f); // Modify the multiplier if simulation looks too unstable
         }
     }
 }

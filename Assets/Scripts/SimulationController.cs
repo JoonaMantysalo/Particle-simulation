@@ -7,7 +7,7 @@ public class SimulationController : MonoBehaviour
 {
     public float particleSize;
     public float gravity;
-    [Range(0f, 1f)]
+    [Range(0.95f, 1f)]
     public float resistance;
     public bool spawnParticles;
 
@@ -97,40 +97,6 @@ public class SimulationController : MonoBehaviour
         }
     }
 
-    void Collisions()
-    {
-        foreach (Particle particle in particles)
-        {
-            (int, int) currentCell = particleCell[particle];
-            for (int i = currentCell.Item1 - 1; i <= currentCell.Item1 + 1; i++)
-            {
-                for (int j = currentCell.Item2 - 1; j <= currentCell.Item2 + 1; j++)
-                {
-                    (int, int) neighborCell = (i, j);
-                    if (cellParticles.ContainsKey(neighborCell))
-                    {
-                        foreach (Particle neighbor in cellParticles[neighborCell])
-                        {
-                            if (particle == neighbor) continue;
-
-                            float distance = Vector2.Distance(particle.position, neighbor.position);
-                            if (distance < particleSize)
-                            {
-                                Vector2 collisionAxis = particle.position - neighbor.position;
-                                Vector2 n = collisionAxis / distance;
-                                float delta = particleSize - distance;
-                                particle.SetPosition(particle.position + 0.5f * delta * n);
-                                neighbor.SetPosition(neighbor.position - 0.5f * delta * n);
-
-                            }
-                        }
-                    } 
-                }
-            }
-            
-        }
-    }
-
     (int, int) GetCell(Particle particle)
     {
         int x = Mathf.FloorToInt(particle.position.x / particleSize);
@@ -165,11 +131,8 @@ public class SimulationController : MonoBehaviour
             if (container == ContainerType.Rectangle) WallCollisionsRectangle();
             if (container == ContainerType.Circle) WallCollisionsCircle();
 
-            //ParticleCollisions();
-            //Collisions();
-
+            //CollisionUsingGrid();
             CollisionsGPU();
-            //Test();
 
             UpdatePositions(deltaTime);
         }
@@ -216,7 +179,7 @@ public class SimulationController : MonoBehaviour
         }
     }
 
-    void Test()
+    void CollisionUsingGrid()
     {
         // Each cell
         foreach (var partList in cellParticles.Values)
@@ -259,7 +222,7 @@ public class SimulationController : MonoBehaviour
         foreach(var particle in particles)
         {
             particle.UpdatePosition(deltaTime, resistance);
-            UpdateCell(particle);
+            //UpdateCell(particle);
         }
     }
 
@@ -322,24 +285,37 @@ public class SimulationController : MonoBehaviour
     }
 
     // Old
-    void ParticleCollisions()
+    void Collisions()
     {
-        for (int i = 0; i < particles.Count; i++)
+        foreach (Particle particle in particles)
         {
-            Particle particle1 = particles[i];
-            for (int j = i + 1; j < particles.Count; j++)
+            (int, int) currentCell = particleCell[particle];
+            for (int i = currentCell.Item1 - 1; i <= currentCell.Item1 + 1; i++)
             {
-                Particle particle2 = particles[j];
-                float distance = Vector2.Distance(particle1.position, particle2.position);
-                if (distance < particleSize)
+                for (int j = currentCell.Item2 - 1; j <= currentCell.Item2 + 1; j++)
                 {
-                    Vector2 collisionAxis = particle1.position - particle2.position;
-                    Vector2 n = collisionAxis / distance;
-                    float delta = particleSize - distance;
-                    particle1.SetPosition(particle1.position + 0.5f * delta * n);
-                    particle2.SetPosition(particle2.position - 0.5f * delta * n);
+                    (int, int) neighborCell = (i, j);
+                    if (cellParticles.ContainsKey(neighborCell))
+                    {
+                        foreach (Particle neighbor in cellParticles[neighborCell])
+                        {
+                            if (particle == neighbor) continue;
+
+                            float distance = Vector2.Distance(particle.position, neighbor.position);
+                            if (distance < particleSize)
+                            {
+                                Vector2 collisionAxis = particle.position - neighbor.position;
+                                Vector2 n = collisionAxis / distance;
+                                float delta = particleSize - distance;
+                                particle.SetPosition(particle.position + 0.5f * delta * n);
+                                neighbor.SetPosition(neighbor.position - 0.5f * delta * n);
+
+                            }
+                        }
+                    }
                 }
             }
+
         }
     }
 
