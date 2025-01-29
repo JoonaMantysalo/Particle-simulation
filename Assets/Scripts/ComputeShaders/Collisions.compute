@@ -17,8 +17,6 @@ float particleRadius;
     if (particleIndex >= particles.Length)
         return;
 
-    float2 position = particles[particleIndex].position;
-
     ParticleStruct particle = particles[particleIndex];
 
     for (uint i = 0; i < particles.Length; i++)
@@ -39,15 +37,7 @@ float particleRadius;
 
             float overlap = particleRadius * 2.0f - dist;
 
-            positionChanges[particleIndex] += normal * (overlap * 0.5f);
-            // positionChanges[i] -= normal * (overlap * 0.5f);
-            //  particle.position += normal * (overlap * 0.5f);
-            //   other.position -= normal * (overlap * 0.5f);
-
-            // particles[i] = other;
+            positionChanges[particleIndex] += normal * (overlap * 0.2f); // Modify the multiplier if simulation looks too unstable
         }
     }
-
-    // Write back the updated particle
-    // particles[particleIndex] = particle;
 }

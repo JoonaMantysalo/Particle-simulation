@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Unity.Mathematics;
-using UnityEditor;
 using UnityEngine;
-using static UnityEngine.ParticleSystem;
 
 public class SimulationController : MonoBehaviour
 {
@@ -23,7 +20,7 @@ public class SimulationController : MonoBehaviour
     ParticleGeneration particleGeneration;
     Vector2 centerPoint;
     int spawnRateCounter = 0;
-    int subSteps = 8;
+    int subSteps = 4;
 
     Dictionary<Particle, (int, int)> particleCell = new Dictionary<Particle, (int, int)>();
     Dictionary<(int, int), List<Particle>> cellParticles = new Dictionary<(int, int), List<Particle>>();
@@ -81,6 +78,18 @@ public class SimulationController : MonoBehaviour
             for (float i = -containerMax; i < containerMax; i += particleSize)
             {
                 for (float j = -containerMax; j < containerMax; j += particleSize)
+                {
+                    cellParticles[(Mathf.FloorToInt(i / particleSize), Mathf.FloorToInt(j / particleSize))] = new List<Particle>();
+                }
+            }
+        }
+        if (container == ContainerType.Rectangle)
+        {
+            float containerMaxX = containerSizeRec.x;
+            float containerMaxY = containerSizeRec.y;
+            for (float i = -containerMaxX; i < containerMaxX; i += particleSize)
+            {
+                for (float j = -containerMaxY; j < containerMaxY; j += particleSize)
                 {
                     cellParticles[(Mathf.FloorToInt(i / particleSize), Mathf.FloorToInt(j / particleSize))] = new List<Particle>();
                 }
@@ -158,6 +167,7 @@ public class SimulationController : MonoBehaviour
 
             //ParticleCollisions();
             //Collisions();
+
             CollisionsGPU();
             //Test();
 
@@ -201,6 +211,7 @@ public class SimulationController : MonoBehaviour
         {
             Vector2 posChange = new Vector2(positionChanges[i].x, positionChanges[i].y);
             particle.SetPosition(particle.position + posChange);
+            if (!posChange.Equals(Vector2.zero)) particle.collision = true;
             i++;
         }
     }
@@ -349,9 +360,7 @@ public class SimulationController : MonoBehaviour
     {
         Gizmos.color = new Color(0, 0.6f, 0.3f, 0.6f);
         if (container == ContainerType.Rectangle)
-            Gizmos.DrawWireCube(Vector2.zero, containerSizeRec);
-        if (container == ContainerType.Circle)
-            Gizmos.DrawWireSphere(Vector2.zero, containerSizeCir);        
+            Gizmos.DrawWireCube(Vector2.zero, containerSizeRec);       
 
         
     }

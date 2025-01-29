@@ -37,7 +37,6 @@ public class Particle : MonoBehaviour
         acceleration = Vector2.zero;
     }
 
-
     public void Accelerate(Vector2 accelaration)
     {
         this.acceleration = accelaration;

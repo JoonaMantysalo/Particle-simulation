@@ -18,6 +18,7 @@ public class ParticleGeneration : MonoBehaviour
     float particleRadius;
     int particleCount = 0;
 
+
     private void OnValidate()
     {
         SimulationController simController = GetComponent<SimulationController>();

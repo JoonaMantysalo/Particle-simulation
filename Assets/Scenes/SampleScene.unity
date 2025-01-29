@@ -254,7 +254,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particleSize: 0.2
   gravity: 20
-  resistance: 1
+  resistance: 0.999
   spawnParticles: 1
   container: 1
   containerSizeRec: {x: 7, y: 10}
