@@ -252,12 +252,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2d7e8278f63877489fb45a9a4574a6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleSize: 0.2
+  particleSize: 0.1
   gravity: 20
   resistance: 0.999
   spawnParticles: 1
   container: 0
-  containerSizeRec: {x: 7, y: 10}
+  containerSizeRec: {x: 8, y: 8}
   containerSizeCir: 4
   containerSprite: {fileID: -2413806693520163455, guid: af9620ebe8f0e284a97e69078cf1e9ac, type: 3}
   particles:
@@ -347,11 +347,13 @@ MonoBehaviour:
   spawnType: 1
   particlesPerRow: 2
   numOfRows: 1
-  spawnRate: 5
-  spawnPosition: {x: 0.5, y: 4.43}
+  spawnRate: 0.005
+  spawnPosition: {x: 0, y: 3.8}
   density: 1.16
-  spawnSpeed: 0.01
-  spawnAngle: 0
+  spawnSpeed: 0.02
+  spawnAngle: -1.24
+  oscillationSpeed: 2
+  angleRange: 80
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +407,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 4
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
